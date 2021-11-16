@@ -1,0 +1,60 @@
+版本：steamvr plugin 2.3.2 (sdk 1.4.18) (current)released Jun 13, 2019
+Assets\SteamVR\Input\SteamVR_Behaviour_Pose.cs
+class里面加上这几行：
+        public class myHistroyStep:SteamVR_HistoryStep{
+            public Vector3 localPosition;
+            public Quaternion localRotation;
+            public bool HasOrigin;
+        }
+        private System.Collections.Generic.Queue<myHistroyStep> myHistoryQueue
+        = new System.Collections.Generic.Queue<myHistroyStep>();
+        protected int myLastFrameUpdated;
+        public long milliseconds=3000;
+        
+        
+
+protected void UpdateHistoryBuffer():
+最后面加上这几行：
+        if (myLastFrameUpdated != currentFrame)
+            {
+                myHistroyStep bufferNow=new myHistroyStep();
+                bufferNow.HasOrigin=(origin!=null);
+                if(bufferNow.HasOrigin){
+                    bufferNow.position=origin.transform.TransformPoint(poseAction[inputSource].localPosition);
+                    bufferNow.rotation=origin.rotation * poseAction[inputSource].localRotation;
+                }
+                bufferNow.localPosition = poseAction[inputSource].localPosition;
+                bufferNow.localRotation = poseAction[inputSource].localRotation;
+                bufferNow.velocity=poseAction[inputSource].velocity;
+                bufferNow.angularVelocity=poseAction[inputSource].angularVelocity;
+                bufferNow.timeInTicks = System.DateTime.Now.Ticks;
+                myHistoryQueue.Enqueue(bufferNow);
+                myLastFrameUpdated = currentFrame;
+            }
+    
+protected virtual void UpdateTransform():
+           if (origin != null)
+            {
+                transform.position = origin.transform.TransformPoint(poseAction[inputSource].localPosition);
+                transform.rotation = origin.rotation * poseAction[inputSource].localRotation;
+            }
+            else
+            {
+                transform.localPosition = poseAction[inputSource].localPosition;
+                transform.localRotation = poseAction[inputSource].localRotation;
+            }
+改成：
+            if(myHistoryQueue.Count>0){
+                myHistroyStep before=myHistoryQueue.Peek();
+                if((System.DateTime.Now.Ticks-before.timeInTicks)>=(milliseconds*TimeSpan.TicksPerMillisecond)){
+                    myHistoryQueue.Dequeue();
+                    if(before.HasOrigin){
+                        transform.position = before.position;
+                        transform.rotation = before.rotation;
+                    }else{
+                        transform.localPosition = before.localPosition;
+                        transform.localRotation = before.localRotation;
+                    }
+
+                }
+            }

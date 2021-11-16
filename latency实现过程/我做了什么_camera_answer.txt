@@ -1,0 +1,6 @@
+1.原始camera里面加一个tracked pose driver的component，同时把里面的use relative transform选项去掉对勾，不选。
+2.camerarig里面再添加一个camera。
+3.新camera里面的camera component，把depth设置成1。新camera的depth一定要比旧的camera的depth（一般默认为0）大。
+4.新camera里面加一个tracked pose driver的component，但是disable它。
+5.新camera里面加一个脚本，follow with lag。把原始camera拖拽到脚本的“target to follow”栏里面。注意private IEnumerator LaggyFollow(Vector3 _pos, Quaternion _rot)。c#编译器好像有了更新，必须改成private IEnumerator<WaitForSeconds> LaggyFollow(Vector3 _pos, Quaternion _rot)。
+6（选做）.原始camera里面的camera component，"culling mask"设置成 "nothing"，来提升表现。
